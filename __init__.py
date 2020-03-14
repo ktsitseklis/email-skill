@@ -171,7 +171,7 @@ class Email(MycroftSkill):
 
         return list(new_emails)
 
-    def list_recent_email(self, account, folder, password, port, address, mail_num, whitelist=None, mark_as_seen=False):
+    def list_recent_email(self, mail_num, account, folder, password, port, address, whitelist=None, mark_as_seen=False):
         if self.update_credentials() is False:  # No credentials
             return
         """
@@ -375,10 +375,10 @@ class Email(MycroftSkill):
         self.log.info("Checking recent mails")
         try:
             mail_num = normalize_email(message.data.get('number'))
-            recent_mails = self.list_recent_email(account=self.account, folder=self.folder, password=self.password,
-                                             port=self.port, address=self.server, mail_num = mail_num)
+            recent_mails = self.list_recent_email(mail_num,account=self.account, folder=self.folder, password=self.password,
+                                             port=self.port, address=self.server)
         except Exception as e:
-            self.speak_dialog('error.getting.last.mails')
+            self.speak_dialog("error.getting.last.mails")
             return
 
         self.report_email(recent_mails)
