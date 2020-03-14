@@ -171,6 +171,53 @@ class Email(MycroftSkill):
 
         return list(new_emails)
 
+def list_recent_email(self, account, folder, password, port, address, mail_num, whitelist=None, mark_as_seen=False):
+        if self.update_credentials() is False:  # No credentials
+            return
+        """
+        Returns most recent emails.
+        output:
+        dicts in the format :{name,sender,subject}
+        whitelist: the a list of emails that it will return
+        """
+        M = imaplib.IMAP4(str(address), port=int(port))
+        #M.startttls()
+        M.login(str(account), str(password))  # Login
+        M.select(str(folder))
+        rv, data = M.search(None, "ALL")  # Only get unseen/unread emails
+        message_num = 1
+        recent_emails = []
+        mail_list = data[0].split()
+        mail_list = mail_list[-1*int(mail_num):]
+        for num in mail_list:
+            rv, data = M.fetch(num, '(RFC822)')
+            msg = email.message_from_bytes(data[0][1])
+            hdr = email.header.make_header(email.header.decode_header(msg['Subject']))  # Get subject
+            sender = email.header.make_header(email.header.decode_header(msg['From']))  # Get sender
+            from_email = email.utils.parseaddr(msg['From'])[1]
+            subject = str(hdr)
+            sender = str(sender).lower()
+
+            is_in_whitelist = not whitelist or from_email in whitelist or any(
+                s.lower() in sender.lower().split(" ") for s in whitelist)
+
+            mail = {"message_num": message_num, "sender": sender, "subject": subject}
+            if not is_in_whitelist:
+                # The user does not want emails from that sender, skip it
+                continue
+
+            recent_emails.append(mail)
+            message_num += 1
+        # Clean up
+        M.close()
+        M.logout()
+
+        return list(recent_emails)
+
+
+
+
+
     def poll_emails(self, data):
         setting = self.settings.get('look_for_email')
         # check email
@@ -321,6 +368,18 @@ class Email(MycroftSkill):
             return
 
         self.report_email(new_emails)
+
+    @intent_file_handler('last.intent')
+    def get_last_mail(self, message):
+        """Get last emails and speak them"""
+        self.log.info("Checking recent mails")
+        try:
+            mail_num = normalize_email(message.data.get('number'))
+            recent_mails = self.list_recent_email(account=self.account, folder=self.folder, password=self.password,
+                                             port=self.port, address=self.server, mail_num)
+        except Exception as e:
+            self.speak_dialog('error.getting.last.mails')
+            return
 
 
 def create_skill():
