@@ -136,7 +136,7 @@ class Email(MycroftSkill):
         whitelist: the a list of emails that it will return
         """
         M = imaplib.IMAP4(str(address), port=int(port))
-        M.startttls()
+        #M.startttls()
         M.login(str(account), str(password))  # Login
         M.select(str(folder))
         rv, data = M.search(None, "(UNSEEN)")  # Only get unseen/unread emails
