@@ -374,7 +374,7 @@ class Email(MycroftSkill):
         """Get last emails and speak them"""
         self.log.info("Checking recent mails")
         try:
-            mail_num = normalize_email(message.data.get('number'))
+            mail_num = message.data.get('number')
             recent_mails = self.list_recent_email(mail_num,account=self.account, folder=self.folder, password=self.password,
                                              port=self.port, address=self.server)
         except Exception as e:
